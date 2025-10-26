@@ -1,22 +1,22 @@
 {
-    # Configuración global de FrankenPHP
+# Configuración global de FrankenPHP
     frankenphp
     order php_server before file_server
 }
 
 :8080 {
-    # Raíz del proyecto Laravel
+# Raíz del proyecto Laravel
     root * /app/public
 
-    # Configuración PHP
+# Configuración PHP
     php_server
 
-    # Archivos estáticos
+# Archivos estáticos
     file_server
 
-    # Logs
+# Logs
     log {
-        output stdout
-        format json
-    }
+            output stdout
+            format json
+        }
 }
