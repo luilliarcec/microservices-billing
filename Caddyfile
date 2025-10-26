@@ -1,22 +1,17 @@
 {
-# Configuración global de FrankenPHP
     frankenphp
     order php_server before file_server
+    auto_https off # Disable for production
 }
 
 :8080 {
-# Raíz del proyecto Laravel
     root * /app/public
-
-# Configuración PHP
+    encode gzip
     php_server
-
-# Archivos estáticos
     file_server
 
-# Logs
     log {
             output stdout
-            format json
+            format console
         }
 }

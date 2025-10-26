@@ -21,6 +21,9 @@ WORKDIR /app
 # Copiar archivos de la aplicación
 COPY . .
 
+# Copiar Caddyfile personalizado
+COPY Caddyfile /etc/caddy/Caddyfile
+
 # Instalar dependencias de Laravel
 RUN composer install --no-dev --optimize-autoloader
 
