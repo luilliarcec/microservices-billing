@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     libzip-dev \
-    && docker-php-ext-install zip pdo pdo_mysql bcmath \
+    && docker-php-ext-install zip pdo bcmath \
     && pecl install mongodb redis \
     && docker-php-ext-enable mongodb redis \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
