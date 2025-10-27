@@ -8,7 +8,8 @@ services:
         WWWGROUP: '${WWWGROUP:-1000}'
     container_name: microservices-billing-app
     ports:
-      - "8001:8080"
+      - '${APP_PORT:-8001}:8000'
+    entrypoint: php artisan octane:frankenphp --workers=1 --max-requests=1
     volumes:
       - .:/app
     depends_on:

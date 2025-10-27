@@ -11,17 +11,16 @@ ENV APP_ENV=local
 
 WORKDIR /app
 
-# Install necessary system dependencies and PHP extensions
-RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    zip \
-    unzip \
-    libzip-dev \
-    && docker-php-ext-install zip pdo bcmath \
-    && pecl install mongodb redis \
-    && docker-php-ext-enable mongodb redis \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+# Install php extensions
+RUN install-php-extensions \
+    pcntl \
+	pdo \
+	gd \
+	intl \
+	zip \
+	bcmath \
+    mongodb \
+    redis
 
 # Install composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -39,6 +38,6 @@ RUN chown -R app:app .
 # Switch to user app
 USER app
 
-EXPOSE 8080
+EXPOSE 8000
 
-CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]
+ENTRYPOINT ["php", "artisan", "octane:frankenphp"]
