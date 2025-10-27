@@ -1,8 +1,22 @@
-FROM dunglas/frankenphp:1-php8.4
+FROM node:20-alpine AS frontend
+
+WORKDIR /app
+
+# Copy node dependency files
+COPY package.json package-lock.json* ./
+
+# Install node dependencies
+RUN npm ci --no-audit --no-fund
+
+# Copy source code needed to compile
+COPY . .
+
+# Compile assets (vite, mix, etc.)
+RUN npm run build
+
+FROM dunglas/frankenphp:1-php8.4 AS backend
 
 ENV COMPOSER_ALLOW_SUPERUSER=1
-ENV TZ=UTC
-ENV APP_ENV=production
 
 WORKDIR /app
 
@@ -38,11 +52,32 @@ COPY . .
 # Generate optimized autoloader
 RUN composer dump-autoload --optimize --classmap-authoritative
 
-# Laravel optimizations (caches)
+FROM dunglas/frankenphp:1-php8.4
+
+ENV COMPOSER_ALLOW_SUPERUSER=1
+ENV TZ=UTC
+ENV APP_ENV=production
+
+WORKDIR /app
+
+# Copying compiled php extensions
+COPY --from=backend /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
+COPY --from=backend /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
+
+# Copy application from backend stage
+COPY --from=backend /app /app
+
+# Copying compiled assets from frontend stage
+COPY --from=frontend /app/public/build /app/public/build
+
+# Copy optimized php settings
+COPY ./infrastructure/pro/php.ini /usr/local/etc/php/conf.d/custom.ini
+
+# Laravel optimizations
 RUN php artisan optimize
 
 # Set permissions
-RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache \
+RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache /app/public \
     && chmod -R 775 /app/storage /app/bootstrap/cache
 
 USER www-data
