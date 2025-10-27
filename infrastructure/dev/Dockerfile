@@ -7,7 +7,6 @@ ARG WWWGROUP=1000
 # Environment variables
 ENV COMPOSER_ALLOW_SUPERUSER=1
 ENV TZ=UTC
-ENV APP_ENV=local
 
 WORKDIR /app
 
@@ -28,9 +27,6 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Create user with the same UID/GID as the host
 RUN groupadd --force -g $WWWGROUP app \
     && useradd -ms /bin/bash --no-user-group -g $WWWGROUP -u $WWWUSER app
-
-# Copy configuration files
-COPY ./infrastructure/dev/Caddyfile /etc/caddy/Caddyfile
 
 # Give permissions to the directory
 RUN chown -R app:app .
