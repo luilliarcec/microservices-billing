@@ -1,0 +1,64 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: infrastructure/dev/Dockerfile
+      args:
+        WWWUSER: '${WWWUSER:-1000}'
+        WWWGROUP: '${WWWGROUP:-1000}'
+    container_name: microservices-billing-app
+    ports:
+      - "8001:8080"
+    volumes:
+      - .:/app
+    depends_on:
+      - mongodb
+      - redis
+      - rabbitmq
+    networks:
+      - billing-net
+
+  mongodb:
+    image: mongo:7.0
+    container_name: microservices-billing-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=billing_db
+    volumes:
+      - mongodb-billing-data:/data/db
+    networks:
+      - billing-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: microservices-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - billing-net
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: microservices-rabbitmq
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Management UI
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - billing-net
+
+volumes:
+  mongodb-billing-data:
+  redis-data:
+  rabbitmq-data:
+
+networks:
+  billing-net:
+    driver: bridge
