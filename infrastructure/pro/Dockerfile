@@ -1,5 +1,6 @@
-FROM dunglas/frankenphp:1-php8.4 AS builder
+FROM dunglas/frankenphp:1-php8.4
 
+ENV APP_ENV=production
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
 WORKDIR /app
@@ -29,13 +30,14 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
         pcntl \
         soap \
         exif \
+        opcache \
     && pecl install mongodb redis \
     && docker-php-ext-enable mongodb redis opcache
 
 # Install composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy dependency files first (cache layer)
+# Copy dependency files (best cache)
 COPY composer.json composer.lock ./
 
 # Install production dependencies
@@ -43,8 +45,7 @@ RUN composer install \
     --no-dev \
     --no-scripts \
     --no-autoloader \
-    --prefer-dist \
-    --optimize-autoloader
+    --prefer-dist
 
 # Copy source code
 COPY . .
@@ -52,35 +53,11 @@ COPY . .
 # Generate optimized autoloader
 RUN composer dump-autoload --optimize --classmap-authoritative
 
-# Stage 2: Runtime
-FROM dunglas/frankenphp:1-php8.4
-
-ENV APP_ENV=production
-ENV COMPOSER_ALLOW_SUPERUSER=1
-
-WORKDIR /app
-
-# Instalar solo dependencias runtime (sin dev tools)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libzip4 \
-    libpng16-16 \
-    libjpeg62-turbo \
-    libfreetype6 \
-    libxml2 \
-    libicu72 \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Copiar extensiones compiladas del builder
-COPY --from=builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
-
-# Copy application from builder
-COPY --from=builder --chown=www-data:www-data /app /app
-
 # Copy production settings
-COPY --chown=www-data:www-data ./infrastructure/pro/Caddyfile /etc/caddy/Caddyfile
+COPY ./infrastructure/pro/Caddyfile /etc/caddy/Caddyfile
 
 # Laravel Optimizations
-RUN php artisan optimize || true
+RUN php artisan otimize || true
 
 # Final Permissions
 RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache \
