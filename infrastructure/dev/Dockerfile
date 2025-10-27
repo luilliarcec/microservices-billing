@@ -24,6 +24,11 @@ RUN install-php-extensions \
 # Install composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+# Install Node.js
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install -g npm@latest
+
 # Create user with the same UID/GID as the host
 RUN groupadd --force -g $WWWGROUP app \
     && useradd -ms /bin/bash --no-user-group -g $WWWGROUP -u $WWWUSER app
