@@ -35,5 +35,3 @@ RUN chown -R app:app .
 USER app
 
 EXPOSE 8000
-
-ENTRYPOINT ["php", "artisan", "octane:frankenphp"]

@@ -9,7 +9,7 @@ services:
     container_name: microservices-billing-app
     ports:
       - '${APP_PORT:-8001}:8000'
-    entrypoint: php artisan octane:frankenphp --workers=1 --max-requests=1
+    entrypoint: php artisan octane:frankenphp --workers=1 --max-requests=250 --watch
     volumes:
       - .:/app
     depends_on:
