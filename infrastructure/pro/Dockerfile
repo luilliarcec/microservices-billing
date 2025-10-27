@@ -14,16 +14,19 @@ COPY . .
 # Compile assets (vite, mix, etc.)
 RUN npm run build
 
-FROM dunglas/frankenphp:1-php8.4 AS backend
+FROM dunglas/frankenphp:1-php8.4
 
 ENV COMPOSER_ALLOW_SUPERUSER=1
+ENV TZ=UTC
+ENV APP_ENV=production
 
 WORKDIR /app
 
-# Install php extensions + opcache
+# Install php extensions
 RUN install-php-extensions \
     pcntl \
     pdo \
+    pdo_mysql \
     gd \
     intl \
     zip \
@@ -35,43 +38,22 @@ RUN install-php-extensions \
 # Install composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy composer files first (best cache for docker)
-COPY composer.json composer.lock ./
+# Copy app code
+COPY . .
+
+# Copy compiled assets
+COPY --from=frontend /app/public/build ./public/build
+
+# Copy php settings
+COPY ./infrastructure/pro/php.ini /usr/local/etc/php/conf.d/custom.ini
 
 # Install production dependencies (without dev)
 RUN composer install \
     --no-dev \
-    --no-scripts \
-    --no-autoloader \
+    --optimize-autoloader \
+    --classmap-authoritative \
     --prefer-dist \
     --no-interaction
-
-# Copy application code
-COPY . .
-
-# Generate optimized autoloader
-RUN composer dump-autoload --optimize --classmap-authoritative
-
-FROM dunglas/frankenphp:1-php8.4
-
-ENV COMPOSER_ALLOW_SUPERUSER=1
-ENV TZ=UTC
-ENV APP_ENV=production
-
-WORKDIR /app
-
-# Copying compiled php extensions
-COPY --from=backend /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
-COPY --from=backend /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
-
-# Copy application from backend stage
-COPY --from=backend /app /app
-
-# Copying compiled assets from frontend stage
-COPY --from=frontend /app/public/build /app/public/build
-
-# Copy optimized php settings
-COPY ./infrastructure/pro/php.ini /usr/local/etc/php/conf.d/custom.ini
 
 # Laravel optimizations
 RUN php artisan optimize
