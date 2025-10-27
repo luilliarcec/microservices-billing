@@ -1,70 +1,52 @@
 FROM dunglas/frankenphp:1-php8.4
 
-ENV APP_ENV=production
 ENV COMPOSER_ALLOW_SUPERUSER=1
+ENV TZ=UTC
+ENV APP_ENV=production
 
 WORKDIR /app
 
-# Install system dependencies required to build
-RUN apt-get update && apt-get install -y \
-    git \
+# Install php extensions + opcache
+RUN install-php-extensions \
+    pcntl \
+    pdo \
+    gd \
+    intl \
     zip \
-    unzip \
-    libzip-dev \
-    libpng-dev \
-    libjpeg62-turbo-dev \
-    libfreetype6-dev \
-    libxml2-dev \
-    libicu-dev \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) \
-        gd \
-        zip \
-        pdo \
-        pdo_mysql \
-        bcmath \
-        intl \
-        pcntl \
-        soap \
-        exif \
-        opcache \
-    && pecl install mongodb redis \
-    && docker-php-ext-enable mongodb redis opcache
+    bcmath \
+    mongodb \
+    redis \
+    opcache
 
 # Install composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy dependency files (best cache)
+# Copy composer files first (best cache for docker)
 COPY composer.json composer.lock ./
 
-# Install production dependencies
+# Install production dependencies (without dev)
 RUN composer install \
     --no-dev \
     --no-scripts \
     --no-autoloader \
-    --prefer-dist
+    --prefer-dist \
+    --no-interaction
 
-# Copy source code
+# Copy application code
 COPY . .
 
 # Generate optimized autoloader
 RUN composer dump-autoload --optimize --classmap-authoritative
 
-# Copy production settings
-COPY ./infrastructure/pro/Caddyfile /etc/caddy/Caddyfile
+# Laravel optimizations (caches)
+RUN php artisan optimize
 
-# Laravel Optimizations
-RUN php artisan otimize || true
-
-# Final Permissions
+# Set permissions
 RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache \
     && chmod -R 775 /app/storage /app/bootstrap/cache
 
 USER www-data
 
-EXPOSE 8080
+EXPOSE 8000
 
-CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]
+CMD ["php", "artisan", "octane:frankenphp", "--host=0.0.0.0", "--port=8000", "--workers=4", "--max-requests=1000"]
