@@ -6,14 +6,20 @@
 
 :8080 {
     root * /app/public
+
     encode gzip
-    php_server
-    try_files {path} {path}/ /index.php?{query}
+
+    php_server {
+                   resolve_root_symlink
+               }
+
+    try_files {path} {path} / /index.php? {query}
+
     file_server
 
     log {
             output stdout
             format console
-            level INFO
+            level DEBUG
         }
 }
