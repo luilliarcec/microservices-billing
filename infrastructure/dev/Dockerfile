@@ -19,7 +19,11 @@ RUN install-php-extensions \
 	zip \
 	bcmath \
     mongodb \
-    redis
+    ffi \
+    redis \
+    && echo "ffi.enable=true" >> /usr/local/etc/php/conf.d/99-custom.ini \
+    && echo "post_max_size=50M" >> /usr/local/etc/php/conf.d/99-custom.ini \
+    && echo "upload_max_filesize=50M" >> /usr/local/etc/php/conf.d/99-custom.ini
 
 # Install composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer

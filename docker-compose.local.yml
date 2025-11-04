@@ -9,7 +9,7 @@ services:
     container_name: microservices-billing-app
     ports:
       - '${APP_PORT:-8001}:8000'
-    entrypoint: php artisan octane:frankenphp --workers=1 --max-requests=250 --watch
+    entrypoint: php artisan octane:frankenphp --workers=1 --max-requests=1 --watch
     volumes:
       - .:/app
     depends_on:
@@ -23,9 +23,11 @@ services:
     image: mongo:7.0
     container_name: microservices-billing-mongodb
     ports:
-      - "27017:27017"
+      - '${FORWARD_MONGODB_PORT:-27017}:27017'
     environment:
-      - MONGO_INITDB_DATABASE=billing_db
+      MONGO_INITDB_ROOT_USERNAME: '${DB_USERNAME}'
+      MONGO_INITDB_ROOT_PASSWORD: '${DB_PASSWORD}'
+      MONGO_INITDB_DATABASE: '${DB_DATABASE}'
     volumes:
       - mongodb-billing-data:/data/db
     networks:

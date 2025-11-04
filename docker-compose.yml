@@ -8,7 +8,10 @@ services:
         WWWGROUP: '${WWWGROUP:-1000}'
     container_name: microservices-billing-app
     ports:
-      - '${APP_PORT:-8001}:8000'
+      - '80:8000'
+      - '443:443'
+      - '443:443/udp'
+    entrypoint: php artisan octane:frankenphp --host=localhost --port=8000 --port=443 --admin-port=2019 --https
     depends_on:
       - mongodb
       - redis
@@ -29,7 +32,9 @@ services:
     ports:
       - "27017:27017"
     environment:
-      - MONGO_INITDB_DATABASE=billing_db
+      MONGO_INITDB_ROOT_USERNAME: '${DB_USERNAME}'
+      MONGO_INITDB_ROOT_PASSWORD: '${DB_PASSWORD}'
+      MONGO_INITDB_DATABASE: '${DB_DATABASE}'
     volumes:
       - mongodb-billing-data:/data/db
     networks:
