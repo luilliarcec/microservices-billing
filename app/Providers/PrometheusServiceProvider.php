@@ -2,42 +2,23 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\ServiceProvider;
-use Spatie\Prometheus\Collectors\Horizon\CurrentMasterSupervisorCollector;
-use Spatie\Prometheus\Collectors\Horizon\CurrentProcessesPerQueueCollector;
-use Spatie\Prometheus\Collectors\Horizon\CurrentWorkloadCollector;
-use Spatie\Prometheus\Collectors\Horizon\FailedJobsPerHourCollector;
-use Spatie\Prometheus\Collectors\Horizon\HorizonStatusCollector;
-use Spatie\Prometheus\Collectors\Horizon\JobsPerMinuteCollector;
-use Spatie\Prometheus\Collectors\Horizon\RecentJobsCollector;
-use Spatie\Prometheus\Collectors\Queue\QueueDelayedJobsCollector;
-use Spatie\Prometheus\Collectors\Queue\QueueOldestPendingJobCollector;
-use Spatie\Prometheus\Collectors\Queue\QueuePendingJobsCollector;
-use Spatie\Prometheus\Collectors\Queue\QueueReservedJobsCollector;
-use Spatie\Prometheus\Collectors\Queue\QueueSizeCollector;
-use Spatie\Prometheus\Facades\Prometheus;
+use Prometheus\CollectorRegistry;
+use Prometheus\Storage\Redis;
 
 class PrometheusServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        Prometheus::addGauge('my_gauge', function () {
-            return 123.45;
+        $this->app->singleton(CollectorRegistry::class, function () {
+            return new CollectorRegistry(new Redis([
+                'host' => config('database.redis.default.host'),
+                'port' => config('database.redis.default.port'),
+                'timeout' => 0.1,
+                'read_timeout' => 10,
+                'persistent_connections' => false,
+            ]));
         });
-
-        // $this->registerQueueCollectors(['default']);
-    }
-
-    public function registerQueueCollectors(array $queues = [], ?string $connection = null): self
-    {
-        Prometheus::registerCollectorClasses([
-            QueueSizeCollector::class,
-            QueuePendingJobsCollector::class,
-            QueueDelayedJobsCollector::class,
-            QueueReservedJobsCollector::class,
-            QueueOldestPendingJobCollector::class,
-        ], compact('connection', 'queues'));
-
-        return $this;
     }
 }
