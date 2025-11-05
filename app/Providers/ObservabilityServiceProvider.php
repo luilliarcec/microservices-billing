@@ -2,14 +2,9 @@
 
 namespace App\Providers;
 
-use App\Observability\Enums\Headers;
-use App\Observability\Enums\Keys;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Str;
 use Prometheus\CollectorRegistry;
 use Prometheus\Storage\Redis;
 
@@ -52,19 +47,5 @@ class ObservabilityServiceProvider extends ServiceProvider
                 ]);
             });
         }
-
-        Request::macro('initCorrelation', function () {
-            $id = $this->header(Headers::CorrelationId->value) ?? Str::uuid()->toString();
-
-            context()->add(Keys::CorrelationId->value, $id);
-
-            $this->headers->set(Headers::CorrelationId->value, $id);
-
-            return $id;
-        });
-
-        Response::macro('withCorrelation', function ($id) {
-            $this->headers->set(Headers::CorrelationId->value, $id);
-        });
     }
 }
