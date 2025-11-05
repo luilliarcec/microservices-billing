@@ -13,7 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->use([
-            \App\Http\Middleware\AddRequestId::class,
+            \App\Observability\Middleware\AddCorrelationId::class,
             \App\Http\Middleware\PrometheusMetrics::class,
         ]);
     })

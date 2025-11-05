@@ -9,46 +9,20 @@ clients:
   - url: http://loki:3100/loki/api/v1/push
 
 scrape_configs:
-  # Logs de Laravel
-  - job_name: laravel
+  # Logs de billing service
+  - job_name: billing-service
     static_configs:
       - targets:
           - localhost
         labels:
-          job: laravel
+          job: billing-service
           __path__: /var/log/laravel/*.log
 
     pipeline_stages:
-      # Parse JSON logs de Laravel
-      - json:
-          expressions:
-            level: level
-            message: message
-            context: context
-            timestamp: datetime
-
-      # Extraer información del contexto
-      - json:
-          expressions:
-            exception: exception
-            user_id: user_id
-            request_id: request_id
-          source: context
-
-      # Establecer el timestamp
-      - timestamp:
-          source: timestamp
-          format: RFC3339
-
-      # Etiquetas adicionales
-      - labels:
-          level:
-          user_id:
-          request_id:
-
-      # Output final
-      - output:
-          source: message
+      - multiline:
+          firstline: '^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\]'
+          max_wait_time: 3s
+          max_lines: 500
 
   # Logs de sistema (opcional)
   - job_name: system
@@ -56,5 +30,5 @@ scrape_configs:
       - targets:
           - localhost
         labels:
-          job: varlogs
+          job: system
           __path__: /var/log/*.log
