@@ -18,9 +18,9 @@ scrape_configs:
       - targets: ['node-exporter:9100']
 
   # Métricas de Laravel
-  - job_name: 'laravel'
+  - job_name: 'billing-service'
     static_configs:
-      - targets: ['host.docker.internal:9091']
+      - targets: ['host.docker.internal:8001']
     metrics_path: '/metrics'
 
   # Métricas de Loki
