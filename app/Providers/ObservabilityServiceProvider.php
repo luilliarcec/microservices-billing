@@ -6,14 +6,28 @@ use App\Observability\Enums\Headers;
 use App\Observability\Enums\Keys;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Context;
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Prometheus\CollectorRegistry;
+use Prometheus\Storage\Redis;
 
 class ObservabilityServiceProvider extends ServiceProvider
 {
+    public function register(): void
+    {
+        $this->app->singleton(CollectorRegistry::class, function () {
+            return new CollectorRegistry(new Redis([
+                'host' => config('database.redis.default.host'),
+                'port' => config('database.redis.default.port'),
+                'timeout' => 0.1,
+                'read_timeout' => 10,
+                'persistent_connections' => false,
+            ]));
+        });
+    }
+
     public function boot(): void
     {
         // Log de queries lentas
@@ -42,7 +56,7 @@ class ObservabilityServiceProvider extends ServiceProvider
         Request::macro('initCorrelation', function () {
             $id = $this->header(Headers::CorrelationId->value) ?? Str::uuid()->toString();
 
-            Context::add(Keys::CorrelationId->value, $id);
+            context()->add(Keys::CorrelationId->value, $id);
 
             $this->headers->set(Headers::CorrelationId->value, $id);
 
