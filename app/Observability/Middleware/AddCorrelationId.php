@@ -6,8 +6,6 @@ use App\Observability\Enums\Headers;
 use App\Observability\Enums\Keys;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Str;
 
 class AddCorrelationId
